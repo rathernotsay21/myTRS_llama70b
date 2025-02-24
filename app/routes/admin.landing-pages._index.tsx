@@ -112,7 +112,11 @@ export default function LandingPagesIndex() {
                   </span>
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-                  {page.updatedAt.toLocaleDateString()}
+                {typeof page.updatedAt === 'string' 
+                        ? new Date(page.updatedAt).toLocaleDateString()
+                        : page.updatedAt instanceof Date 
+                        ? page.updatedAt.toLocaleDateString()
+                        : 'Unknown date'}{page.updatedAt.toLocaleDateString()}
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                   <Link
