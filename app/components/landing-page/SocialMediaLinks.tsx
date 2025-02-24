@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 interface SocialMediaLink {
   platform: 'facebook' | 'twitter' | 'instagram' | 'linkedin' | 'youtube' | 'website' | 'other';
   url: string;
