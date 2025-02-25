@@ -1,40 +1,22 @@
-# Welcome to Remix!
+# Remix Landing Page Builder
 
-- ð [Remix docs](https://remix.run/docs)
+A modern web application built with Remix for creating and managing customizable landing pages for events and volunteer opportunities.
 
-## Development
+## Features
 
-Run the dev server:
+- 🎨 Customizable landing page themes and styles
+- 📱 Responsive design with dark mode support
+- 📝 Dynamic form builder for volunteer registration
+- 🔗 Social media integration
+- 👀 Live preview mode
+- 🎯 SEO-friendly with meta tags support
+- 🖼️ Image upload support for logos and backgrounds
 
-```shellscript
-npm run dev
-```
+## Tech Stack
 
-## Deployment
-
-First, build your app for production:
-
-```sh
-npm run build
-```
-
-Then run the app in production mode:
-
-```sh
-npm start
-```
-
-Now you'll need to pick a host to deploy it to.
-
-### DIY
-
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-- `build/server`
-- `build/client`
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+- [Remix](https://remix.run/) - Full stack web framework
+- [React](https://reactjs.org/) - UI library
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [Tailwind CSS](https://tailwindcss.com/) - Styling
+- [Prisma](https://www.prisma.io/) - Database ORM
+- [Vite](https://vitejs.dev/) - Build tool
