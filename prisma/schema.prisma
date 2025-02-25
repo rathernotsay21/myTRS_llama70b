@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model LandingPage {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Theme options
+  primaryColor     String   @default("#3B82F6") // blue-500
+  secondaryColor   String   @default("#1F2937") // gray-800
+  accentColor      String   @default("#F59E0B") // amber-500
+  buttonStyle      String   @default("rounded") // rounded, square, pill
+  bannerImageUrl   String?
+  
+  // Content sections
+  description      String?
+  eventDate        String?
+  eventTime        String?
+  eventLocation    String?
+  buttonText       String?
+  buttonLink       String?
+}

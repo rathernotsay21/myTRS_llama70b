@@ -1,37 +1,37 @@
 import { json, type LoaderFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
-
-// Mock data for now - in a real app you'd fetch from your database
-const mockLandingPages = [
-  {
-    id: "1",
-    title: "Annual Fundraiser 2025",
-    slug: "annual-fundraiser-2025",
-    published: true,
-    createdAt: new Date("2025-01-15"),
-    updatedAt: new Date("2025-01-20"),
-  },
-  {
-    id: "2",
-    title: "Summer Volunteer Drive",
-    slug: "summer-volunteer-drive",
-    published: false,
-    createdAt: new Date("2025-01-10"),
-    updatedAt: new Date("2025-01-10"),
-  },
-];
+import { db } from "~/lib/db.server";
 
 type LoaderData = {
-  landingPages: typeof mockLandingPages;
+  landingPages: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    published: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+  stats: {
+    total: number;
+    published: number;
+  };
 };
 
 export const loader: LoaderFunction = async () => {
-  // In a real app, fetch landing pages from your database
-  return json({ landingPages: mockLandingPages });
+  const landingPages = await db.landingPage.findMany({
+    orderBy: { updatedAt: 'desc' }
+  });
+
+  const stats = {
+    total: landingPages.length,
+    published: landingPages.filter(page => page.published).length
+  };
+  
+  return json({ landingPages, stats });
 };
 
 export default function LandingPagesIndex() {
-  const { landingPages } = useLoaderData<LoaderData>();
+  const { landingPages, stats } = useLoaderData<LoaderData>();
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
@@ -41,7 +41,7 @@ export default function LandingPagesIndex() {
             Landing Pages
           </h1>
           <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-            Create and manage landing pages for your volunteer events
+            {stats.total} total pages, {stats.published} published
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -88,61 +88,65 @@ export default function LandingPagesIndex() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-            {landingPages.map((page) => (
-              <tr key={page.id}>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {page.title}
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <div className="text-sm text-gray-500 dark:text-gray-300">
-                    /{page.slug}
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      page.published
-                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                        : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                    }`}
-                  >
-                    {page.published ? "Published" : "Draft"}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-                {typeof page.updatedAt === 'string' 
-                  ? new Date(page.updatedAt).toLocaleDateString()
-                  : page.updatedAt instanceof Date 
-                  ? page.updatedAt.toLocaleDateString()
-                  : 'Unknown date'}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                  <Link
-                    to={`/admin/landing-pages/${page.id}/edit`}
-                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
-                    Edit
-                  </Link>
-                  <span className="mx-2 text-gray-300 dark:text-gray-600">|</span>
-                  <Link
-                    to={`/admin/landing-pages/${page.id}/preview`}
-                    className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
-                  >
-                    Preview
-                  </Link>
-                  <span className="mx-2 text-gray-300 dark:text-gray-600">|</span>
-                  <Link
-                    to={`/e/${page.slug}`}
-                    className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                    target="_blank"
-                  >
-                    View
-                  </Link>
+            {landingPages.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                  No landing pages yet. Create your first one!
                 </td>
               </tr>
-            ))}
+            ) : (
+              landingPages.map((page) => (
+                <tr key={page.id}>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {page.title}
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="text-sm text-gray-500 dark:text-gray-300">
+                      /{page.slug}
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <span
+                      className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                        page.published
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                      }`}
+                    >
+                      {page.published ? "Published" : "Draft"}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
+                    {new Date(page.updatedAt).toLocaleDateString()}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                    <div className="flex justify-end space-x-3">
+                      <Link
+                        to={`/e/${page.slug}`}
+                        target="_blank"
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        to={`/admin/landing-pages/${page.id}/edit`}
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        Edit
+                      </Link>
+                      <Link
+                        to={`/admin/landing-pages/${page.id}/preview`}
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        Preview
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -1,26 +1,35 @@
 import { json, redirect, type ActionFunction } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
+import { db } from "~/lib/db.server";
 
 // In a real app, you'd have proper form validation and database interactions
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const title = formData.get("title") as string;
+  const published = formData.get("published") === "true";
   
   if (!title || title.length < 3) {
     return json({ error: "Title must be at least 3 characters long" });
   }
   
-  // In a real app, you'd create the landing page in your database
-  // For now, we'll just redirect as if it succeeded
-  
   // Generate a slug from the title
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   
-  // Mock ID generation - in a real app, this would come from your database
-  const id = Math.random().toString(36).substring(2, 9);
-  
-  return redirect(`/admin/landing-pages/${id}/edit`);
+  try {
+    const landingPage = await db.landingPage.create({
+      data: {
+        title,
+        slug,
+        published,
+        content: "", // Empty content for now
+      },
+    });
+    
+    return redirect(`/admin/landing-pages/${landingPage.id}/edit`);
+  } catch (error) {
+    return json({ error: "Failed to create landing page. Please try again." });
+  }
 };
 
 export default function NewLandingPage() {
@@ -52,6 +61,19 @@ export default function NewLandingPage() {
           {actionData?.error && (
             <p className="mt-2 text-sm text-red-600 dark:text-red-400">{actionData.error}</p>
           )}
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            name="published"
+            id="published"
+            value="true"
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          />
+          <label htmlFor="published" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+            Publish this page immediately
+          </label>
         </div>
         
         <div className="flex justify-end">

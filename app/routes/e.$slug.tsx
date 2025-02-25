@@ -1,131 +1,152 @@
 // This is the public-facing landing page route that visitors will see
 import { json, type LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { LandingPageHero } from "~/components/landing-page/LandingPageHero";
-import { LandingPageSection } from "~/components/landing-page/LandingPageSection";
-import { EventInfoSection } from "~/components/landing-page/EventInfoSection";
-import { SocialMediaLinks } from "~/components/landing-page/SocialMediaLinks";
-import { VolunteerForm } from "~/components/landing-page/VolunteerForm";
-import type { LandingPage } from "~/models/landingPage";
-
-// Mock data - in a real app, you'd fetch this from your database based on the slug
-const mockLandingPage: Partial<LandingPage> = {
-  id: "1",
-  title: "Annual Fundraiser 2025",
-  subtitle: "Join us for our biggest event of the year!",
-  eventInfo: {
-    date: "April 15, 2025",
-    time: "5:00 PM - 9:00 PM",
-    location: "City Convention Center",
-    description: "Help us make this year's fundraiser a success by volunteering your time and talents. Whether you're greeting guests, helping with setup, or assisting with the auction, your support makes a difference!"
-  },
-  socialMedia: [
-    { platform: "facebook", url: "https://facebook.com/organization" },
-    { platform: "twitter", url: "https://twitter.com/organization" },
-    { platform: "instagram", url: "https://instagram.com/organization" }
-  ],
-  formFields: [
-    { id: "name", label: "Full Name", type: "text", required: true },
-    { id: "email", label: "Email Address", type: "email", required: true },
-    { id: "phone", label: "Phone Number", type: "tel", required: true },
-    { 
-      id: "availability", 
-      label: "Availability", 
-      type: "checkbox", 
-      required: true,
-      options: [
-        { value: "setup", label: "Setup (2:00 PM - 5:00 PM)" },
-        { value: "event", label: "During Event (5:00 PM - 9:00 PM)" },
-        { value: "cleanup", label: "Cleanup (9:00 PM - 11:00 PM)" }
-      ]
-    },
-    { 
-      id: "skills", 
-      label: "Skills & Interests", 
-      type: "select",
-      options: [
-        { value: "greeting", label: "Guest Greeting" },
-        { value: "registration", label: "Registration Desk" },
-        { value: "auction", label: "Auction Assistant" },
-        { value: "technical", label: "Technical Support" },
-        { value: "photography", label: "Event Photography" }
-      ]
-    },
-    { 
-      id: "experience", 
-      label: "Previous Volunteer Experience", 
-      type: "textarea",
-      placeholder: "Tell us about any previous volunteer experience you have."
-    }
-  ],
-  primaryButtonText: "Volunteer Now",
-  primaryButtonLink: "#volunteer-form",
-  logoUrl: "https://via.placeholder.com/150",
-  backgroundImageUrl: "https://via.placeholder.com/1920x600"
-};
+import { db } from "~/lib/db.server";
 
 type LoaderData = {
-  landingPage: typeof mockLandingPage;
+  landingPage: {
+    id: string;
+    title: string;
+    description: string | null;
+    eventDate: string | null;
+    eventTime: string | null;
+    eventLocation: string | null;
+    buttonText: string | null;
+    buttonLink: string | null;
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+    buttonStyle: string;
+    bannerImageUrl: string | null;
+  };
 };
 
 export const loader: LoaderFunction = async ({ params }) => {
   const { slug } = params;
-  
-  // In a real app, fetch the landing page from your database using the slug
-  // If not found, you could return a 404 response
-  
-  return json({ landingPage: mockLandingPage });
+
+  const landingPage = await db.landingPage.findFirst({
+    where: {
+      slug,
+      published: true,
+    },
+  });
+
+  if (!landingPage) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
+  return json({ landingPage });
 };
 
-export default function LandingPagePublic() {
+export default function LandingPage() {
   const { landingPage } = useLoaderData<LoaderData>();
-  
-  // Mock icons for event details - in a real app, you'd import proper SVG icons
-  const dateIcon = <span>📅</span>;
-  const timeIcon = <span>⏰</span>;
-  const locationIcon = <span>📍</span>;
-  
+
+  const buttonClasses = {
+    rounded: "rounded-md",
+    square: "",
+    pill: "rounded-full",
+  }[landingPage.buttonStyle];
+
   return (
-    <main>
-      <LandingPageHero
-        title={landingPage.title || ""}
-        subtitle={landingPage.subtitle}
-        backgroundImage={landingPage.backgroundImageUrl}
-        primaryButtonText={landingPage.primaryButtonText}
-        primaryButtonLink={landingPage.primaryButtonLink}
-        secondaryButtonText={landingPage.secondaryButtonText}
-        secondaryButtonLink={landingPage.secondaryButtonLink}
-        logoUrl={landingPage.logoUrl}
-        organizationName="Your Organization Name" // This would come from the organization settings
-      />
-      
-      <LandingPageSection variant="secondary" id="event-info">
-        <EventInfoSection
-          details={[
-            { icon: dateIcon, label: "Date", value: landingPage.eventInfo?.date || "" },
-            { icon: timeIcon, label: "Time", value: landingPage.eventInfo?.time || "" },
-            { icon: locationIcon, label: "Location", value: landingPage.eventInfo?.location || "" }
-          ]}
-          description={landingPage.eventInfo?.description}
-        />
-      </LandingPageSection>
-      
-      <LandingPageSection variant="neutral" id="volunteer-form">
-        <VolunteerForm
-          fields={landingPage.formFields || []}
-          onSubmit={(data) => {
-            // In a real app, you'd handle form submission here
-            console.log("Form submitted:", data);
-            // You might submit to an API endpoint, or use Remix's action
-          }}
-        />
-      </LandingPageSection>
-      
-      <LandingPageSection variant="primary" id="social-media">
-        <SocialMediaLinks
-          links={landingPage.socialMedia || []}
-        />
-      </LandingPageSection>
-    </main>
+    <div style={{ backgroundColor: landingPage.secondaryColor }} className="min-h-screen">
+      {landingPage.bannerImageUrl && (
+        <div className="relative h-64 md:h-96">
+          <img
+            src={landingPage.bannerImageUrl}
+            alt={landingPage.title}
+            className="h-full w-full object-cover"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to bottom, ${landingPage.primaryColor}33, ${landingPage.primaryColor}66)`,
+            }}
+          />
+        </div>
+      )}
+
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h1
+            className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
+            style={{ color: landingPage.primaryColor }}
+          >
+            {landingPage.title}
+          </h1>
+          {landingPage.description && (
+            <p className="mx-auto mt-3 max-w-2xl text-xl text-gray-300 sm:mt-4">
+              {landingPage.description}
+            </p>
+          )}
+
+          {landingPage.buttonText && landingPage.buttonLink && (
+            <div className="mt-8">
+              <a
+                href={landingPage.buttonLink}
+                className={`inline-flex items-center px-6 py-3 text-base font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonClasses}`}
+                style={{ backgroundColor: landingPage.accentColor }}
+              >
+                {landingPage.buttonText}
+              </a>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-12 bg-white bg-opacity-10 rounded-lg p-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {landingPage.eventDate && (
+              <div className="text-center">
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: `${landingPage.primaryColor}22` }}
+                >
+                  <h3
+                    className="text-lg font-medium"
+                    style={{ color: landingPage.primaryColor }}
+                  >
+                    Date
+                  </h3>
+                  <p className="mt-2 text-gray-300">{landingPage.eventDate}</p>
+                </div>
+              </div>
+            )}
+
+            {landingPage.eventTime && (
+              <div className="text-center">
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: `${landingPage.primaryColor}22` }}
+                >
+                  <h3
+                    className="text-lg font-medium"
+                    style={{ color: landingPage.primaryColor }}
+                  >
+                    Time
+                  </h3>
+                  <p className="mt-2 text-gray-300">{landingPage.eventTime}</p>
+                </div>
+              </div>
+            )}
+
+            {landingPage.eventLocation && (
+              <div className="text-center">
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: `${landingPage.primaryColor}22` }}
+                >
+                  <h3
+                    className="text-lg font-medium"
+                    style={{ color: landingPage.primaryColor }}
+                  >
+                    Location
+                  </h3>
+                  <p className="mt-2 text-gray-300">{landingPage.eventLocation}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -13,4 +13,8 @@ export default defineConfig({
     }),
     tsconfigPaths(),
   ],
+  publicDir: "public", // Explicitly set public directory
+  server: {
+    host: true, // Enable network access
+  },
 });

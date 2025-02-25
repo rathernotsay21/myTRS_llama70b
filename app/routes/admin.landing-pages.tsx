@@ -1,4 +1,4 @@
-// app/routes/admin.landing-pages.tsx
+// app/routes/admin/landing-pages/_layout.tsx
 import { Outlet } from "@remix-run/react";
 
 export default function AdminLandingPagesLayout() {
